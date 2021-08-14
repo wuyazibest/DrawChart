@@ -2,7 +2,7 @@
 logs/*.log
 migrations/
 conf/config.ini
-
+*.xlsx
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
