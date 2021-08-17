@@ -22,3 +22,4 @@ redis==3.5.3
 SQLAlchemy==1.4.22
 uWSGI
 nacos-sdk-python==0.1.5
+celery~=5.1.2

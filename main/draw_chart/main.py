@@ -6,12 +6,16 @@
 # @Email  : wuyazibest@163.com
 # @Desc   :
 import json
+import os
+import sys
 
 import numpy as np
 import pandas as pd
 
-from .data_source import tiobe, tencent_stock
-from .draw import draw_line, draw_bar, draw_timeline
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from draw_chart.data_source import tiobe, tencent_stock
+from draw_chart.draw import draw_line, draw_bar, draw_timeline
 
 
 def draw_tiobe():

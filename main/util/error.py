@@ -5,54 +5,70 @@
 # @Author : wuyazibest
 # @Email  : wuyazibest@163.com
 # @Desc   :
+
+import sqlalchemy.exc
 from flask import Response
 
 from .common import json_resp
 from .response_code import RET
 
 
-class PlusException(Exception):
-    def __init__(self, *args, code=RET.PARAMERR, status=None, **kwargs):
-        super(PlusException, self).__init__(*args)
-        self.code = code
-        self.status = status
+class PlusError(Exception):
+    code = None
+    status = None
+    
+    def __init__(self, *args, code=None, status=None, **kwargs):
+        super(PlusError, self).__init__(*args)
+        self.code = code or self.code
+        self.status = status or self.status
         for k, v in kwargs.items():
             setattr(self, k, v)
 
 
-class AuthenticationFailed(PlusException):
-    def __init__(self, *args, code=RET.AUTHERR, status=None, **kwargs):
-        super(AuthenticationFailed, self).__init__(*args, code=code, status=status, **kwargs)
+class PlusException(PlusError):
+    code = RET.PARAMERR
 
 
-class PermissionDenied(PlusException):
-    def __init__(self, *args, code=RET.ROLEERR, status=None, **kwargs):
-        super(PermissionDenied, self).__init__(*args, code=code, status=status, **kwargs)
+class ParamError(PlusError):
+    code = RET.PARAMERR
 
 
-class RequestAborted(Exception):
+class AuthenticationFailed(PlusError):
+    code = RET.AUTHERR
+
+
+class PermissionDenied(PlusError):
+    code = RET.ROLEERR
+
+
+class RequestAborted(PlusError):
     """The request was closed before it was completed, or timed out."""
     pass
 
 
-class ViewDoesNotExist(Exception):
+class ViewDoesNotExist(PlusError):
     """The requested view does not exist"""
     pass
 
 
-class MiddlewareNotUsed(Exception):
+class MiddlewareNotUsed(PlusError):
     """This middleware is not used in this server configuration"""
     pass
 
 
-class ImproperlyConfigured(Exception):
+class ImproperlyConfigured(PlusError):
     """Django is somehow improperly configured"""
     pass
 
 
-class FieldError(Exception):
+class FieldError(PlusError):
     """Some kind of problem with a model field."""
     pass
+
+
+class ValidationError(PlusError):
+    """校验错误"""
+    code = RET.PARAMERR
 
 
 class HttpResponseError:
@@ -72,3 +88,26 @@ def plus_assert(expression, msg="", code=RET.PARAMERR, status=None):
     """
     if not expression:
         raise PlusException(msg, code=code, status=status)
+
+
+def exception_handler(exc, prefix='', **kwargs):
+    """
+    统一错误处理
+    :param exc:
+    :param prefix:
+    :param kwargs:
+    :return:
+    """
+    if isinstance(exc, ValidationError):
+        return json_resp(RET.PARAMERR, f"数据校验错误：{exc}", **kwargs)
+    
+    if isinstance(exc, sqlalchemy.exc.IntegrityError):
+        if "UniqueViolation" in str(exc):
+            return json_resp(RET.DATAERR, f"该资源已存在，重复创建")
+        
+        return json_resp(RET.DATAERR, f"数据写入错误  error：{exc}", **kwargs)
+    
+    if isinstance(exc, sqlalchemy.exc.SQLAlchemyError):
+        return json_resp(RET.DATAERR, f"数据库操作错误 error：{exc}", **kwargs)
+    
+    return json_resp(getattr(exc, "code", RET.SERVERERR), f"{prefix} error: {exc}", **kwargs)
