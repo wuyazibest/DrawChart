@@ -1,20 +1,79 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# @File   : common.py
-# @Time   : 2021/8/14 10:31
-# @Author : wuyazibest
-# @Email  : wuyazibest@163.com
+# @File    : common.py
+# @Time    : 2020/8/30 15:32
+# @Author  : wuyazibest
+# @Email   : wuyazibest@163.com
 # @Desc   :
-import json
+import hashlib
 import logging
+import datetime
 import re
+
+import redis
 import time
 
 import requests
-
+import simplejson
+from flask import jsonify, request, json
+from jsonschema import validate
 from retrying import retry
 
+from main import config
+
+from .response_code import RET, error_map
+
 logger = logging.getLogger(__name__)
+
+
+class JSONEncoder(simplejson.JSONEncoder):
+    """
+    不能同时继承simplejson.JSONEncoder和json.JSONEncoder  在itsdangerous<2.0 是出现继承错误
+    """
+    
+    def default(self, o):
+        # 强制调用json.JSONEncoder的方法
+        return json.JSONEncoder().default(o)
+
+
+def norm_data(code, desc=None, data=None, **kwargs):
+    kwargs["code"] = code if code in error_map else RET.UNKOWNERR
+    kwargs["msg"] = error_map.get(code, "未知消息")
+    kwargs["desc"] = desc or error_map.get(code, "未知消息")
+    kwargs["data"] = data
+    return kwargs
+
+
+def json_resp(code, desc=None, data=None, **kwargs):
+    return jsonify(norm_data(code, desc=desc, data=data, **kwargs))
+
+
+class Pager(object):
+    def __init__(self, object_list, limit):
+        self.object_list = object_list
+        self.limit = int(limit)
+        self.total = len(self.object_list)
+    
+    def page(self, offset):
+        try:
+            if not (isinstance(offset, int) or offset.isdecimail()):
+                offset = 1
+            else:
+                offset = int(offset)
+            
+            bottom = (offset - 1) * self.limit
+            top = bottom + self.limit
+            if not self.total:
+                return []
+            if bottom < 0:
+                ret = self.object_list[0:self.limit]
+            else:
+                ret = self.object_list[bottom:top]
+        except Exception as e:
+            logger.error(f"分页查询出错 error: {e} {self.object_list[0]}")
+            ret = self.object_list[0:self.limit]
+        
+        return ret
 
 
 @retry(stop_max_attempt_number=2)
@@ -35,6 +94,76 @@ def parse_url(url, method="GET", raise_exception=False, timeout=10, **kwargs):
             raise Exception(msg)
         else:
             return {}
+
+
+def get_request_ip(request):
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded_for:
+        request_ip = x_forwarded_for.split(",")[0]
+    else:
+        request_ip = request.META.get("REMOTE_ADDR")
+    return request_ip
+
+
+def check_json(instance, schema):
+    try:
+        validate(instance, schema, types=dict(array=(list, tuple)))
+        return True
+    except Exception as e:
+        logger.error(f"json数据校验失败  {instance}   error: %s" % e)
+        return False
+
+
+def check_datetime_fmt(date_str, fmt="%Y-%m-%d %H:%M:%S"):
+    try:
+        return datetime.datetime.strptime(date_str, fmt)
+    except:
+        return False
+
+
+def make_cache_key(*args, **kwargs):
+    """
+    自定义缓存key生成规则：
+    根据请求路径和所有请求参数的不同而分别缓存
+    """
+    args_as_sorted_tuple = tuple(sorted((pair for pair in request.args.items(multi=True))))
+    args_as_bytes = str(args_as_sorted_tuple).encode()
+    
+    cache_hash = hashlib.md5()
+    cache_hash.update(args_as_bytes)
+    cache_hash.update(request.data)
+    cache_hash = str(cache_hash.hexdigest())
+    cache_key = request.path + cache_hash
+    return cache_key
+
+
+def generate_md5(s, encoding="utf-8"):
+    return str(hashlib.md5(s.encode(encoding)).hexdigest())
+
+
+def get_now_time(fmt="%Y-%m-%d %H:%M:%S"):
+    return datetime.datetime.now().strftime(fmt)
+
+
+def get_datetime_obj(date_str, fmt="%Y-%m-%d %H:%M:%S"):
+    try:
+        return datetime.datetime.strptime(date_str, fmt)
+    except:
+        return False
+
+
+def get_datetime_str(date_obj, fmt="%Y-%m-%d %H:%M:%S"):
+    try:
+        return datetime.datetime.strftime(date_obj, fmt)
+    except:
+        return ""
+
+
+def get_timestamp(date_str, fmt="%Y-%m-%d %H:%M:%S"):
+    try:
+        return time.mktime(time.strptime(date_str, fmt))
+    except:
+        return ""
 
 
 def talib_format(fn, *args, **kwargs):

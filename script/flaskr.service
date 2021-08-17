@@ -1,0 +1,16 @@
+[Unit]
+# 描述
+# /usr/lib/systemd/system
+Description = flaskr service daemon
+After=network.target
+
+[Service]
+# 工作目录
+WorkingDirectory = /app/DrawChart
+# 服务启动的命令
+ExecStart = /app/DrawChart/venv/bin/uwsgi --die-on-term --env SERVER_ENV=produce --ini /app/DrawChart/conf/uwsgi.ini
+ExecReload = /bin/kill -HUP $MAINPID
+KillMode = control-group
+Restart = on-failure
+RestartSec = 15s
+

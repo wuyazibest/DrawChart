@@ -10,7 +10,7 @@ from importlib import import_module
 from pyecharts.charts import Bar, Timeline, Line
 from pyecharts import options as opts
 
-from config import EChart
+from main.config import EChart
 
 color_function = """
         function (params) {

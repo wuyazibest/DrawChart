@@ -12,7 +12,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from util.common import parse_url, talib_format
+from main.util import parse_url, talib_format
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,8 @@ class TencentStock:
         
         # url = "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get"
         url = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
-        stock_code = stock_code  # usAAPL.OQ 股票代码，这里是us是美股，AAPL是苹果，“.OQ”是美股拼接后缀，其他不需要拼接
+        # usAAPL.OQ 股票代码，这里是us是美股，AAPL是苹果，“.OQ”是美股拼接后缀，其他不需要拼接  上海sh 深圳sz 香港hk
+        # stock_code = 'sh' + stock_code if stock_code[:1] == '6' else 'sz' + stock_code
         cycle = cycle
         begin_date = begin_date  # 从结束时间倒退，如果没有超过开始时间，则返回限制的天数，如果超过，则返回日期限制
         end_date = end_date
@@ -67,10 +68,13 @@ class TencentStock:
         if resp.get("code") is not 0:
             logger.error(resp.get("msg", ""))
         
-        return resp.get("data", {}).get(stock_code, {}).get(cycle, [])
+        # resp.get("data", {}) 在查询不到的时候返回为空列表
+        return (resp.get("data", {}) or {}).get(stock_code, {}).get(cycle, [])
     
     def format_data(self, data):
-        df = pd.DataFrame(data, columns=self.columns)
+        df = pd.DataFrame(data)
+        # 分红时返回的列数为7
+        df = df.iloc[:, :6].set_axis(self.columns, axis='columns')
         df = df.set_index("date")
         df = df.astype(float)
         # 星期数
@@ -126,6 +130,6 @@ if __name__ == '__main__':
     # ret = request_stock(stock_code="sh000001", begin_date="2021-04-01", end_date="2021-04-15", date_num=100)
     # print(ret)
     
-    ret = batch_request_stock(stock_code=["sh601318", "sh601238", "sh688981"], begin_date="2021-04-01", end_date="2021-04-15",
+    ret = batch_request_stock(stock_code=["601318", "601238", "688981"], begin_date="2021-04-01", end_date="2021-04-15",
                               target="price_range")
     print(ret)
