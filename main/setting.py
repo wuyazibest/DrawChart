@@ -32,21 +32,26 @@ def create_app():
         )
     # 加载配置
     app.config.from_object(config)
-    # 初始化mysql数据库
-    # db=SQLAlchemy(app)
-    db.init_app(app)
-    
-    # csrf注册，
-    # CsrfProtect(app)
     
     # 指定json编码的工具
     from main.util.common import JSONEncoder
     app.json_encoder = JSONEncoder
     
+    # 初始化数据库
+    # db=SQLAlchemy(app)
+    db.init_app(app)
+    
     # 初始化缓存工具
     cache.init_app(app)
     # 每次启动清楚接口缓存
     cache.clear()
+    
+    # csrf注册，
+    # CsrfProtect(app)
+    
+    # error handle注册
+    from main.util.middleware import register_error_handler
+    register_error_handler(app)
     
     # 初始化请求中间件
     from main.util.middleware import init_hook

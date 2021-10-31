@@ -56,13 +56,15 @@ class TencentStock:
         # url = "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get"
         url = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
         # usAAPL.OQ 股票代码，这里是us是美股，AAPL是苹果，“.OQ”是美股拼接后缀，其他不需要拼接  上海sh 深圳sz 香港hk
-        # stock_code = 'sh' + stock_code if stock_code[:1] == '6' else 'sz' + stock_code
+        stock_code = 'sh%s' % stock_code if stock_code[:1] in ['5', '6', '9'] or stock_code[:2] in ['11', '13'] else 'sz%s' % stock_code
         cycle = cycle
         begin_date = begin_date  # 从结束时间倒退，如果没有超过开始时间，则返回限制的天数，如果超过，则返回日期限制
         end_date = end_date
         date_num = date_num
         fq_type = fq_type
-        params = f"param={stock_code},{cycle},{begin_date},{end_date},{date_num},{fq_type}"
+        params = {
+            "param": f"{stock_code},{cycle},{begin_date},{end_date},{date_num},{fq_type}"
+            }
         resp = parse_url(url, params=params, headers=self.headers, **kwargs)
         
         if resp.get("code") is not 0:
@@ -127,7 +129,7 @@ def batch_request_stock(stock_code, begin_date, end_date, target, **kwargs):
 
 
 if __name__ == '__main__':
-    # ret = request_stock(stock_code="sh000001", begin_date="2021-04-01", end_date="2021-04-15", date_num=100)
+    # ret = request_stock(stock_code="000001", begin_date="2021-04-01", end_date="2021-04-15", date_num=100)
     # print(ret)
     
     ret = batch_request_stock(stock_code=["601318", "601238", "688981"], begin_date="2021-04-01", end_date="2021-04-15",

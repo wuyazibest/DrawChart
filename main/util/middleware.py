@@ -111,3 +111,16 @@ def add_sign(response):
         response = jsonify(attach_sign(norm_data(RET.SERVERERR, msg)))
     
     return response
+
+
+def register_error_handler(app):
+    @app.errorhandler(404)
+    def handle_404_error(err):
+        """
+        以json格式返回url错误
+        """
+        return json_resp(RET.REQERR, f"路由未发现 {err}")
+    
+    @app.errorhandler(Exception)
+    def catch_all_except(err):
+        return json_resp(RET.UNKOWNERR, f"{err}")

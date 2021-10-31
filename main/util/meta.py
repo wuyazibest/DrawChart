@@ -113,8 +113,9 @@ class JSONEncodedDict(types.TypeDecorator):
 class BaseModel(db.Model):
     __abstract__ = True
     
-    def create(self, params={}):
+    def create(self, params={}, **kwargs):
         try:
+            params.update(kwargs)
             for k, v in params.items():
                 if hasattr(self, k):
                     setattr(self, k, v)
@@ -126,8 +127,9 @@ class BaseModel(db.Model):
             db.session.rollback()
             raise PlusException(f"数据库操作错误 {e}", code=RET.DBERR)
     
-    def update(self, params={}):
+    def update(self, params={}, **kwargs):
         try:
+            params.update(kwargs)
             for k, v in params.items():
                 if hasattr(self, k):
                     setattr(self, k, v)

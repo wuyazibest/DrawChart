@@ -22,11 +22,10 @@ logger = logging.getLogger(__name__)
 
 
 class TiobeView(BaseViewSet):
-    decorators = ()  # 位置在尾的先执行
+    decorators = ()
     resources = "tiobe"
     query_field = (
-        "chart_type",
-        )
+    )
     
     @property
     def queryset(self):
@@ -56,7 +55,7 @@ class TiobeView(BaseViewSet):
             logger.info(f"{self.resources}查询 user:{self.current_user.username} params:{self.request_args}")
             params = {x: self.request_args.get(x) for x in self.query_field if self.request_args.get(x, "") != ""}
             
-            chart_type = params.get("chart_type") or "line"
+            chart_type = self.request_args.get("chart_type") or "line"
             file_name = chart_type + "chart.html"
             file_path = os.path.join(EChart.file_path, file_name)
             if os.path.exists(file_path):
@@ -91,8 +90,6 @@ class StockView(BaseViewSet):
     decorators = ()  # 位置在尾的先执行
     resources = "stock"
     query_field = (
-        "chart_type",
-        "data_source",
         "stock_code",
         "begin_date",
         "end_date",
@@ -155,7 +152,7 @@ class StockView(BaseViewSet):
                 {
                     "field": "stock_code",
                     "mean": "股票代码-字符串列表-上海sh 深圳sz 香港hk",
-                    "value": ["sh600001", "sz399001"],
+                    "value": ["600001", "399001"],
                     "is_must": True,
                     "type": "list",
                     },
@@ -195,8 +192,8 @@ class StockView(BaseViewSet):
             if not all([x in params for x in self.query_required_field]):
                 raise PlusException("参数缺失")
             
-            chart_type = params.get("chart_type") or "line"
-            data_source = params.get("data_source") or "tencent"
+            chart_type = self.request_args.get("chart_type") or "line"
+            data_source = self.request_args.get("data_source") or "tencent"
             target = params.get("target")
             
             if chart_type not in self.chart_type_map:
