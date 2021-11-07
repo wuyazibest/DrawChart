@@ -213,3 +213,9 @@ def check_is_mobile(request):
     if _short_matches.search(user_agent) is not None:
         return True
     return False
+
+
+def format_stock_code(stock_code):
+    stock_code = str(stock_code)
+    return stock_code if not stock_code[:1].isdecimal() else \
+        "sh%s" % stock_code if stock_code[:1] in ["5", "6", "9"] or stock_code[:2] in ["11", "13"] else "sz%s" % stock_code

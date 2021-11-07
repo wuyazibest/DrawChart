@@ -1,24 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @File   : tencent_stock.py
-# @Time   : 2021/8/12 10:47
+# @File   : ifeng_stock.py
+# @Time   : 2021/9/29 10:24
 # @Author : wuyazibest
 # @Email  : wuyazibest@163.com
-# @Desc   :
+# @Desc   : 凤凰网
 
 import json
 import logging
 import time
 import numpy as np
 import pandas as pd
+import requests
 
 from main.util import parse_url, talib_format, format_stock_code
 
 logger = logging.getLogger(__name__)
 
 
-class TencentStock:
-    columns = ["date", "open", "close", "high", "low", "volume"]
+class IFengStock:
+    columns = ["date", "open", "high", "close", "low", "volume"]
     
     def __init__(self, headers=None, columns=None):
         self.headers = headers or {
@@ -53,31 +54,36 @@ class TencentStock:
         ]
         """
         
-        # url = "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get"
-        url = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
-        # usAAPL.OQ 股票代码，这里是us是美股，AAPL是苹果，“.OQ”是美股拼接后缀，其他不需要拼接  上海sh 深圳sz 香港hk
+        url = "http://api.finance.ifeng.com/"
         stock_code = format_stock_code(stock_code)
         cycle = cycle
         begin_date = begin_date  # 从结束时间倒退，如果没有超过开始时间，则返回限制的天数，如果超过，则返回日期限制
         end_date = end_date
         date_num = date_num
         fq_type = fq_type
+        url += "akdaily/"
         params = {
-            "param": f"{stock_code},{cycle},{begin_date},{end_date},{date_num},{fq_type}"
+            "code": stock_code,
+            "type": "last"
             }
         resp = parse_url(url, params=params, headers=self.headers, **kwargs)
         
-        if resp.get("code") is not 0:
-            logger.error(resp.get("msg", ""))
-        
-        # resp.get("data", {}) 在查询不到的时候返回为空列表
-        return (resp.get("data", {}) or {}).get(stock_code, {}).get(cycle, [])
+        # resp.get("record") 股票代码错误时返回的为字典
+        return resp.get("record") or []
     
-    def format_data(self, data):
+    def format_data(self,
+                    data,
+                    begin_date="",
+                    end_date="",
+                    date_num=100,
+                    ):
         df = pd.DataFrame(data)
         # 分红时返回的列数为7
         df = df.iloc[:, :6].set_axis(self.columns, axis='columns')
         df = df.set_index("date")
+        df = df[(df.index >= begin_date) & (df.index <= end_date)]
+        df = df.iloc[:date_num + 1, :]
+        
         df = df.astype(float)
         # 星期数
         df["week"] = pd.to_datetime(df.index).weekday + 1
@@ -87,15 +93,15 @@ class TencentStock:
 
 def request_stock(stock_code, begin_date, end_date, target=None, **kwargs):
     pd.set_option('display.float_format', lambda x: str(x))
-    ts = TencentStock()
-    data = ts.get_daily_data(stock_code=stock_code, begin_date=begin_date, end_date=end_date, **kwargs)
+    stock = IFengStock()
+    data = stock.get_daily_data(stock_code=stock_code, **kwargs)
     if not data:
         return pd.DataFrame([])
     
-    df = ts.format_data(data)
+    df = stock.format_data(data, begin_date=begin_date, end_date=end_date, date_num=kwargs.get("date_num", 100))
     
     columns_name = [
-        *ts.columns,
+        *stock.columns,
         "week",
         "ys_close",
         "true_range",
@@ -129,7 +135,7 @@ def batch_request_stock(stock_code, begin_date, end_date, target, **kwargs):
 
 
 if __name__ == '__main__':
-    # ret = request_stock(stock_code="000001", begin_date="2021-04-01", end_date="2021-04-15", date_num=100)
+    # ret = request_stock(stock_code="sh000001", begin_date="2021-04-01", end_date="2021-04-15", date_num=100)
     # print(ret)
     
     ret = batch_request_stock(stock_code=["601318", "601238", "688981"], begin_date="2021-04-01", end_date="2021-04-15",

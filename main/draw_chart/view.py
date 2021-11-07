@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from main.config import EChart
-from main.draw_chart.data_source import tiobe, tencent_stock
+from main.draw_chart.data_source import tiobe, tencent_stock, ifeng_stock
 from main.draw_chart.draw import draw_bar, draw_line, draw_timeline
 from main.util import BaseView, json_resp, RET, BaseViewSet, uri_required, user_required, PlusException
 
@@ -102,7 +102,8 @@ class StockView(BaseViewSet):
         "target"
         )
     data_source_map = {
-        "tencent": tencent_stock
+        "tencent": tencent_stock,
+        "ifeng": ifeng_stock,
         }
     chart_type_map = {
         "bar": draw_bar,
