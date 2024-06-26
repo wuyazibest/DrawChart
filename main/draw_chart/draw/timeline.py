@@ -50,7 +50,7 @@ def draw_timeline(
         # axis_type="time",  # time,value
         symbol="none",
         is_auto_play=True,
-        play_interval=240,
+        play_interval=240,  # 表示播放的速度（跳动的间隔），单位毫秒（ms）
         is_loop_play=False,
         linestyle_opts=opts.LineStyleOpts(width=3),
         # label_opts=opts.LabelOpts(interval=5),

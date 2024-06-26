@@ -72,6 +72,7 @@ def draw_single_bar(
         xaxis_name=None,
         yaxis_name=None,
         reversal_axis=False,
+        max_columns=None,
         ) -> Bar:
     """
     
@@ -94,13 +95,15 @@ def draw_single_bar(
     :param xaxis_name:
     :param yaxis_name:
     :param reversal_axis:
+    :param max_columns: 最大显示柱子数
     :return:
     """
     colors = colors or base_colors
     # 数据重新排序后颜色如果不使用字典，一种颜色对应的数据列会改变
     data_colors = {k: colors[index] if len(colors) > index else None for index, k in enumerate(data_dict)}
     graph = chart_lib("bar")
-    data_dict = dict(sorted(data_dict.items(), key=lambda x: x[1] or 0))
+    max_columns = max_columns or len(data_dict)
+    data_dict = dict(sorted(data_dict.items(), key=lambda x: x[1] or 0)[-max_columns:])
     
     graph.add_xaxis(list(data_dict.keys()))
     
