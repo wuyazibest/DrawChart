@@ -10,7 +10,12 @@ import inspect
 
 class DataDict(dict):
     def __getattr__(self, item):
-        return self.get(item, None)
+        if item in self:
+            return self.get(item)
+        return super().__getattribute__(item)
+    
+    def __setattr__(self, *args, **kwargs):
+        self.__setitem__(*args, **kwargs)
 
 
 class Choice:

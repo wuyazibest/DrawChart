@@ -17,6 +17,8 @@ Migrate(app, db)
 if __name__ == '__main__':
     manager.run()
 
+# python manage.py runserver -h 127.0.0.1 -p 8080 -d
+# migrate 弃用
 # 1.python manage.py db init
 # 2.python manage.py db migrate -m"版本名(注释)"
 # 3.python manage.py db upgrade 然后观察表结构
