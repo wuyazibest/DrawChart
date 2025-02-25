@@ -5,7 +5,7 @@
 # @Author  : wuyazibest
 # @Email   : wuyazibest@163.com
 # @Desc   :
-from datetime import timedelta, datetime
+import datetime
 
 import jwt
 from flask import current_app
@@ -30,7 +30,7 @@ def config(name):
 
 
 def jwt_encode_handler(identity):
-    return _default_jwt_encode_handler(identity).decode("utf-8")
+    return _default_jwt_encode_handler(identity)
 
 
 def jwt_decode_handler(token):
@@ -43,9 +43,9 @@ def _default_jwt_headers_handler(identity):
 
 
 def _default_jwt_payload_handler(identity):
-    iat = datetime.utcnow()
-    exp = iat + timedelta(seconds=int(config("JWT_EXPIRATION_DELTA")))
-    nbf = iat + timedelta(seconds=int(config("JWT_NOT_BEFORE_DELTA")))
+    iat = datetime.datetime.utcnow()
+    exp = iat + datetime.timedelta(seconds=int(config("JWT_EXPIRATION_DELTA")))
+    nbf = iat + datetime.timedelta(seconds=int(config("JWT_NOT_BEFORE_DELTA")))
     identity = getattr(identity, "id") or identity["id"]
     return {"exp": exp, "iat": iat, "nbf": nbf, "identity": identity}
 
@@ -69,7 +69,7 @@ def _default_jwt_encode_handler(identity):
 def _default_jwt_decode_handler(token):
     secret = config("SECRET_KEY")
     algorithm = config("JWT_ALGORITHM")
-    leeway = timedelta(seconds=int(config("JWT_LEEWAY")))
+    leeway = datetime.timedelta(seconds=int(config("JWT_LEEWAY")))
     
     verify_claims = config("JWT_VERIFY_CLAIMS")
     required_claims = config("JWT_REQUIRED_CLAIMS")

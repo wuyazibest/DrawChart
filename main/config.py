@@ -7,15 +7,29 @@
 # @Desc   :
 import base64
 import configparser
+import json
 import os
+from email.policy import default
+from urllib.parse import quote_plus
 
 from main.constant import *
 
+
+class DataDict(dict):
+    def __getattr__(self, item):
+        if item in self:
+            return self.get(item)
+        return super().__getattribute__(item)
+    
+    def __setattr__(self, *args, **kwargs):
+        self.__setitem__(*args, **kwargs)
+
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SERVER_ENV = os.getenv('SERVER_ENV')
+SERVER_ENV = os.getenv("SERVER_ENV")
 _CONFIG = configparser.ConfigParser()
-_CONFIG.read(os.path.join(BASE_DIR, "conf/config.ini"), encoding='utf-8')
+_CONFIG.read(os.path.join(BASE_DIR, "conf/config.ini"), encoding="utf-8")
 
 
 class Nacos:
@@ -46,69 +60,103 @@ class Nacos:
     
     @classmethod
     def update_conf(cls):
-        conf_name = "conf/conf_online.ini"
+        conf_path = os.path.join(BASE_DIR, "conf/conf_online.ini")
         conf_online = cls.get_conf()
         if conf_online:
-            with open(conf_name, "w+", encoding="utf-8") as f:
+            with open(conf_path, "w+", encoding="utf-8") as f:
                 f.write(conf_online)
             
-            _CONFIG.read(os.path.join(BASE_DIR, conf_name), encoding="utf-8")
+            _CONFIG.read(conf_path, encoding="utf-8")
 
 
 # 使用配置中心的配置覆盖本地配置
-if _CONFIG.getboolean("nacos", "start"):
+if _CONFIG.getboolean("nacos", "enable", fallback=False):
     Nacos.update_conf()
-DEBUG = _CONFIG.getboolean("default", "debug")
+
 # 当多服务端做冗余的时候此值需要设置为固定值
 SECRET_KEY = bytes.decode(base64.b64encode(os.urandom(48)))
+DEBUG = _CONFIG.getboolean("default", "debug")
+LOG_LEVEL = _CONFIG.get("log", "level")
 
+MySQLConf = DataDict(
+    host=_CONFIG.get("mysql", "host"),
+    port=_CONFIG.getint("mysql", "port"),
+    user=_CONFIG.get("mysql", "user"),
+    password=quote_plus(_CONFIG.get("mysql", "password")),
+    db=_CONFIG.get("mysql", "db"),
+    charset=_CONFIG.get("mysql", "charset"),
+    pool_size=_CONFIG.getint("mysql", "pool_size"),
+    max_overflow=_CONFIG.getint("mysql", "max_overflow"),
+    pool_recycle=_CONFIG.getint("mysql", "pool_recycle"),
+    pool_timeout=_CONFIG.getint("mysql", "pool_timeout"),
+    pool_pre_ping=_CONFIG.getboolean("mysql", "pool_pre_ping"),
+    echo=_CONFIG.getboolean("mysql", "echo"),
+    )
 
-class MySQLConf:
-    host = _CONFIG.get("mysql", "host")
-    port = _CONFIG.getint("mysql", "port")
-    user = _CONFIG.get("mysql", "user")
-    password = _CONFIG.get("mysql", "password")
-    db = _CONFIG.get("mysql", "db")
-    charset = _CONFIG.get("mysql", "charset")
-    maxconnections = _CONFIG.getint("mysql", "maxconnections")
+PgSQLConf = DataDict(
+    host=_CONFIG.get("pgsql", "host"),
+    port=_CONFIG.getint("pgsql", "port"),
+    user=_CONFIG.get("pgsql", "user"),
+    password=quote_plus(_CONFIG.get("pgsql", "password")),
+    db=_CONFIG.get("pgsql", "db"),
+    charset=_CONFIG.get("pgsql", "charset"),
+    pool_size=_CONFIG.getint("pgsql", "pool_size"),
+    max_overflow=_CONFIG.getint("pgsql", "max_overflow"),
+    pool_recycle=_CONFIG.getint("pgsql", "pool_recycle"),
+    pool_timeout=_CONFIG.getint("pgsql", "pool_timeout"),
+    pool_pre_ping=_CONFIG.getboolean("pgsql", "pool_pre_ping"),
+    echo=_CONFIG.getboolean("pgsql", "echo"),
+    )
 
-
-class PgSQLConf:
-    host = _CONFIG.get("pgsql", "host")
-    port = _CONFIG.getint("pgsql", "port")
-    user = _CONFIG.get("pgsql", "user")
-    password = _CONFIG.get("pgsql", "password")
-    db = _CONFIG.get("pgsql", "db")
-    charset = _CONFIG.get("pgsql", "charset")
-    maxconnections = _CONFIG.getint("pgsql", "maxconnections")
-    pool_recycle = _CONFIG.getint("pgsql", "pool_recycle")
-    pool_size = _CONFIG.getint("pgsql", "pool_size")
-
-
-class RedisConf:
-    host = _CONFIG.get("redis", "host")
-    port = _CONFIG.getint("redis", "port")
-    db1 = _CONFIG.getint("redis", "db1")
-    db2 = _CONFIG.getint("redis", "db2")
-    password = _CONFIG.get("redis", "password")
-    expires = _CONFIG.getint("redis", "expires")
-
+RedisConf = DataDict(
+    host=_CONFIG.get("redis", "host"),
+    port=_CONFIG.getint("redis", "port"),
+    db1=_CONFIG.getint("redis", "db1"),
+    db2=_CONFIG.getint("redis", "db2"),
+    password=_CONFIG.get("redis", "password"),
+    expires=_CONFIG.getint("redis", "expires"),
+    )
 
 SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MySQLConf.user}:{MySQLConf.password}@{MySQLConf.host}:{MySQLConf.port}/{MySQLConf.db}"
+SQLALCHEMY_ENGINE_OPTIONS = {  # 给主数据库链接专用的
+    "connect_args" : {"charset": MySQLConf.charset},
+    "pool_size"    : MySQLConf.pool_size,
+    "max_overflow" : MySQLConf.max_overflow,
+    "pool_recycle" : MySQLConf.pool_recycle,
+    "pool_timeout" : MySQLConf.pool_timeout,
+    "pool_pre_ping": MySQLConf.pool_pre_ping,
+    "echo"         : MySQLConf.echo,
+    }
+
 SQLALCHEMY_BINDS = {
-    # "management": f"mysql+pymysql://{MySQLConf.user}:{MySQLConf.password}@{MySQLConf.host}:{MySQLConf.port}/management",
-    # "sqlite_db": f"sqlite:{BASE_DIR}/lib/sqlite_db.db",
-    # "pgsql_db": f":postgresql//{PgSQLConf.user}:{PgSQLConf.password}@{PgSQLConf.host}:{PgSQLConf.port}/{PgSQLConf.db}",
+    "management": f"mysql+pymysql://{MySQLConf.user}:{MySQLConf.password}@{MySQLConf.host}:{MySQLConf.port}/management",
+    # "sqlite_db": f"sqlite:////{BASE_DIR}/lib/sqlite_db.db",
+    "pgsql_db"  : {
+        "url"          : f"postgresql://{PgSQLConf.user}:{PgSQLConf.password}@{PgSQLConf.host}:{PgSQLConf.port}/{PgSQLConf.db}",
+        "connect_args" : {"client_encoding": PgSQLConf.charset},
+        "pool_size"    : PgSQLConf.pool_size,
+        "max_overflow" : PgSQLConf.max_overflow,
+        "pool_recycle" : PgSQLConf.pool_recycle,
+        "pool_timeout" : PgSQLConf.pool_timeout,
+        "pool_pre_ping": PgSQLConf.pool_pre_ping,
+        "echo"         : PgSQLConf.echo,
+        },
+    }
+SQLALCHEMY_ENGINE_OPTIONS_DEFAULT = {  # 数据库连接的默认值，优先级最低
+    "json_serializer": lambda obj: json.dumps(obj, ensure_ascii=False),
+    "pool_size"      : _CONFIG.get("sqlalchemy", "pool_size"),  # 常驻连接数
+    "max_overflow"   : _CONFIG.get("sqlalchemy", "max_overflow"),  # 最大连接数
+    "pool_recycle"   : _CONFIG.get("sqlalchemy", "pool_recycle"),  # 每个连接的生存时间
+    "pool_timeout"   : _CONFIG.get("sqlalchemy", "pool_timeout"),  # 生成连接的最大等待时间
+    "pool_pre_ping"  : _CONFIG.getboolean("sqlalchemy", "pool_pre_ping"),
+    "echo"           : _CONFIG.getboolean("sqlalchemy", "echo"),
     }
 SQLALCHEMY_TRACK_MODIFICATIONS = _CONFIG.getboolean("sqlalchemy", "track_modifications")
-SQLALCHEMY_COMMIT_ON_TEARDOWN = _CONFIG.getboolean("sqlalchemy", "commit_on_teardown")
-SQLALCHEMY_ECHO = _CONFIG.getboolean("sqlalchemy", "echo")
+# SQLALCHEMY_COMMIT_ON_TEARDOWN = _CONFIG.getboolean("sqlalchemy", "commit_on_teardown")  # This session is in 'prepared' state
+SQLALCHEMY_ECHO = _CONFIG.getboolean("sqlalchemy", "echo")  # sqlalchemy连接的默认值,比默认值高
 
-LOG_LEVEL = _CONFIG.get("log", "level")
 # flask输出json是否排序
 JSON_SORT_KEYS = False
-# 中文编码
-JSON_AS_ASCII = False
 # json格式化格式 flask的debug模式默认启用，需要修改源码
 JSONIFY_PRETTYPRINT_REGULAR = False
 
@@ -118,11 +166,13 @@ CACHE_THRESHOLD = 1000
 CACHE_TYPE = "redis"
 CACHE_REDIS_URL = f"redis://:{RedisConf.password}@{RedisConf.host}:{RedisConf.port}/{RedisConf.db2}"
 
+# jwt生存时间
+JWT_EXPIRATION_DELTA = 60 * 60 * 12
 
-class EChart:
-    file_path = os.path.join(BASE_DIR, "dist")
-    width = "90%"
-    height = "90%"
-    page_title = "DrawChart"
-    theme = "white"
-    js_host = "/static/pyecharts-assets-master/assets/"
+# 请求来源
+RequestFrom = DataDict(
+    web=DataDict(key="web", label="web页面"),
+    mobile=DataDict(key="mobile", label="小程序"),
+    weixin=DataDict(key="weixin", label="weixin小程序"),
+    api=DataDict(key="api", label="api接口"),
+    )

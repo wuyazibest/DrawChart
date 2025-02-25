@@ -5,7 +5,6 @@
 # @Author : wuyazibest
 # @Email  : wuyazibest@163.com
 # @Desc   :
-from flask import send_file
 
 
 def register_url(app):
@@ -14,20 +13,9 @@ def register_url(app):
     :param app:
     :return:
     """
+    from main.user.url import blu_user
+    app.register_blueprint(blu_user, url_prefix="/user")
     
-    @app.route("/favicon.ico", methods={"GET", "POST"})
-    def home():
-        return app.send_static_file("favicon.png")
-    
-    from main.user.url import blu_user, UserModel
-    # app.register_blueprint(blu_user, url_prefix="/user")
-    
-    from main.draw_chart.url import blu_chart
-    app.register_blueprint(blu_chart, url_prefix="/chart")
-    
-    if not hasattr(app, "extensions"):  # pragma: no cover
-        app.extensions = {}
-    app.extensions["UserModel"] = UserModel
     
     print("===" * 10)
     print(app.url_map)

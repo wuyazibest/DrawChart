@@ -1,37 +1,32 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @File    : url.py
-# @Time    : 2020/9/12 21:44
-# @Author  : wuyazibest
-# @Email   : wuyazibest@163.com
+# @File   : url.py
+# @Time   : 2020/11/25 14:15
+# @Author : wuyazibest
+# @Email  : wuyazibest@163.com
 # @Desc   :
 from flask import Blueprint
 
 from .view import *
-from main.util import user_required
 
 blu_user = Blueprint("user", __name__)
 
 
-@blu_user.route("/", methods={"GET", "POST"})
+@blu_user.route("/home", methods={"GET", "POST"})
 def home():
     return "this is user home"
 
 
-# user_info
-blu_user.add_url_rule("/user_info/login/", view_func=UserView.as_view({"GET": "login", "POST": "login"}))
-blu_user.add_url_rule("/user_info/query", view_func=UserView.as_view({"POST": "post_query"}))
-blu_user.add_url_rule("/user_info/create", view_func=UserView.as_view({"POST": "create"}))
-blu_user.add_url_rule("/user_info/update", view_func=UserView.as_view({"PUT": "update"}))
-blu_user.add_url_rule("/user_info/delete", view_func=UserView.as_view({"DELETE": "delete"}))
+# login
+blu_user.add_url_rule("/login", view_func=LoginView.as_view({"POST": "login"}))
 
-# uri
-blu_user.add_url_rule("/uri/query", view_func=UriView.as_view({"POST": "query_uri"}))
-blu_user.add_url_rule("/uri/create", view_func=UriView.as_view({"POST": "create"}))
-blu_user.add_url_rule("/uri/update", view_func=UriView.as_view({"PUT": "update"}))
-blu_user.add_url_rule("/uri/delete", view_func=UriView.as_view({"DELETE": "delete"}))
+# user
+blu_user.add_url_rule("/sys_user/query", view_func=UserView.as_view({"POST": "post_query"}))
+blu_user.add_url_rule("/sys_user/create", view_func=UserView.as_view({"POST": "create"}))
+blu_user.add_url_rule("/sys_user/update", view_func=UserView.as_view({"PUT": "update"}))
+blu_user.add_url_rule("/sys_user/delete", view_func=UserView.as_view({"DELETE": "delete"}))
+blu_user.add_url_rule("/sys_user/certification", view_func=UserView.as_view({"POST": "certification"}))
 
-# user_uri
-blu_user.add_url_rule("/user_uri/query", view_func=UserUriView.as_view({"POST": "post_query"}))
-blu_user.add_url_rule("/user_uri/create", view_func=UserUriView.as_view({"POST": "create"}))
-blu_user.add_url_rule("/user_uri/delete", view_func=UserUriView.as_view({"DELETE": "delete"}))
+blu_user.add_url_rule("/sys_customer/query", view_func=CustomerView.as_view({"POST": "post_query"}))
+blu_user.add_url_rule("/sys_customer/update", view_func=CustomerView.as_view({"PUT": "update"}))
+blu_user.add_url_rule("/sys_customer/delete", view_func=CustomerView.as_view({"DELETE": "delete"}))
