@@ -29,7 +29,13 @@ def create_app():
     # 配置日志
     setup_log(config.LOG_LEVEL)
     # 创建Flask对象,__name__为当前目录
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(
+        __name__,
+        static_url_path="/static",  # 页面访问静态文件的前缀
+        static_folder=os.path.join(config.BASE_DIR, "dist"),  # 实际静态文件的存放目录  最好使用绝对路径
+        template_folder=os.path.join(config.BASE_DIR, "dist"),  # 指定render_template 函数访问文件的位置
+        instance_relative_config=True
+        )
     # 加载配置
     app.config.from_object(config)
     # 初始化mysql数据库
@@ -61,6 +67,10 @@ def create_app():
     # 统一错误处理
     from main.core.error import exception_handler
     app.extensions["exception_handler"] = exception_handler
+    
+    # 设置pyecharts js文件访问目录
+    from pyecharts.globals import CurrentConfig
+    CurrentConfig.ONLINE_HOST = "/static/pyecharts-assets-master/assets/"
     
     # 指定json编码的工具
     class UpdatedJSONProvider(json.provider.DefaultJSONProvider):

@@ -9,14 +9,14 @@
 from pyecharts.charts import Line
 from pyecharts import options as opts
 
-from .base import base_colors, chart_lib
+from .base import base_colors, chart_lib, fmt_file_path
 
 
 def draw_line(
         xaxis,
         row_dict,
         colors=None,
-        path="dist/line.html",
+        path="line.html",
         title=None,
         xaxis_name=None,
         yaxis_name=None,
@@ -77,5 +77,5 @@ def draw_line(
                                  max_="dataMax"),
         yaxis_opts=opts.AxisOpts(name=yaxis_name),
         )
-    graph.render(path)
+    graph.render(fmt_file_path(path))
     return graph

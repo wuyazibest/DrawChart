@@ -16,6 +16,8 @@ def register_url(app):
     from main.user.url import blu_user
     app.register_blueprint(blu_user, url_prefix="/user")
     
+    from main.draw_chart.url import blu_chart
+    app.register_blueprint(blu_chart, url_prefix="/chart")
     
     print("===" * 10)
     print(app.url_map)

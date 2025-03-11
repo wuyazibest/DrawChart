@@ -8,13 +8,13 @@
 from pyecharts.charts import Bar
 from pyecharts import options as opts
 
-from .base import base_colors, color_function, chart_lib
+from .base import base_colors, color_function, chart_lib, fmt_file_path
 
 
 def draw_bar(xaxis,
              row_dict,
              colors=None,
-             path="dist/bar.html",
+             path="bar.html",
              title=None,
              xaxis_name=None,
              yaxis_name=None,
@@ -60,14 +60,14 @@ def draw_bar(xaxis,
                           tooltip_opts=opts.TooltipOpts(is_show=True, trigger="axis", axis_pointer_type="shadow"),
                           xaxis_opts=opts.AxisOpts(name=xaxis_name, axislabel_opts={"interval": "0"}),
                           yaxis_opts=opts.AxisOpts(name=yaxis_name))
-    graph.render(path)
+    graph.render(fmt_file_path(path))
     return graph
 
 
 def draw_single_bar(
         data_dict,
         colors=None,
-        path="dist/bar_single.html",
+        path="bar_single.html",
         title=None,
         xaxis_name=None,
         yaxis_name=None,

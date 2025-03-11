@@ -15,12 +15,14 @@ import re
 import numpy as np
 import pandas as pd
 
-from lxml import etree
+# from lxml import etree
 from openpyxl import Workbook, load_workbook
 
 logger = logging.getLogger(__name__)
 
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def default_path():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "language_data.xlsx")
 
 
 def transform_local_time(utc_time_str):
@@ -38,7 +40,7 @@ def transform_local_time(utc_time_str):
 
 def request_tiobe():
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/21.0.1180.89 Safari/537.1"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
         }
     url = 'https://www.tiobe.com/tiobe-index/'
     resp = requests.get(url, headers=headers).text
@@ -54,7 +56,7 @@ def request_tiobe():
 
 
 def save(data, path=""):
-    path = path if path else os.path.join(CURRENT_DIR, "language_data.xlsx")
+    path = path or default_path()
     exl = Workbook()  # 创建工作簿对象
     sheet = exl.active  # 获取活动的工作表
     # 时间   编程语言   热度
@@ -65,7 +67,7 @@ def save(data, path=""):
 
 
 def reader(path=""):
-    path = path if path else os.path.join(CURRENT_DIR, "language_data.xlsx")
+    path = path or default_path()
     exl = load_workbook(filename=path, data_only=True)
     sheet = exl.active
     return tuple(sheet.values)[1:]
@@ -79,12 +81,13 @@ def get_format_data():
     df = df.astype("float")
     df = df.round(2)
     # df = df.replace({np.nan: None})
+    df.to_dict()
     return df
 
 
 if __name__ == '__main__':
-    data = request_tiobe()
-    save(data)
-    # reader()
-    # ret = get_format_data()
-    # print(ret)
+    # data = request_tiobe()
+    # save(data)
+    reader()
+    ret = get_format_data()
+    print(ret)

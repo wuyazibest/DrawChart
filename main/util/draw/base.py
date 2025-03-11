@@ -5,12 +5,12 @@
 # @Author : wuyazibest
 # @Email  : wuyazibest@163.com
 # @Desc   :
-from importlib import import_module
+import os
 
 from pyecharts.charts import Bar, Timeline, Line
-from pyecharts import options as opts
+from pyecharts import options
 
-from main.config import EChart
+from main.config import BASE_DIR
 
 color_function = """
         function (params) {
@@ -38,16 +38,16 @@ base_colors = [
     "#9932CC",
     ]
 
-initopts = opts.InitOpts(
+initopts = options.InitOpts(
     # width="1600px",
     # height="800px",
-    width=EChart.width,
-    height=EChart.height,
+    width="90%",
+    height="90%",
     chart_id=None,
-    page_title=EChart.page_title,
+    page_title="DrawChart",
     theme="white",
     bg_color=None,
-    js_host=EChart.js_host,
+    # js_host=os.path.join(BASE_DIR, "dist/pyecharts-assets-master/assets/"),
     )
 
 
@@ -58,3 +58,20 @@ def chart_lib(chart_type):
         return Line(initopts)
     elif chart_type == "timeline":
         return Timeline(initopts)
+
+
+def fmt_file_path(path):
+    if os.path.splitext(path)[1] != ".html":
+        path += ".html"
+    
+    if not path.startswith(BASE_DIR):
+        path = os.path.join(BASE_DIR, "dist", path.lstrip("/"))
+    
+    if os.path.exists(path):
+        os.remove(path)
+    else:
+        dirpath = os.path.dirname(path)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+    
+    return path

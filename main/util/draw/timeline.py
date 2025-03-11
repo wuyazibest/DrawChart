@@ -9,12 +9,12 @@
 from pyecharts import options as opts
 
 from .bar import draw_single_bar
-from .base import base_colors, chart_lib
+from .base import base_colors, chart_lib, fmt_file_path
 
 
 def draw_timeline(
         df_dict,
-        path="dist/timeline.html",
+        path="timeline.html",
         title=None,
         xaxis_name=None,
         yaxis_name=None,
@@ -55,4 +55,4 @@ def draw_timeline(
         linestyle_opts=opts.LineStyleOpts(width=3),
         # label_opts=opts.LabelOpts(interval=5),
         )
-    timeline.render(path)
+    timeline.render(fmt_file_path(path))

@@ -128,20 +128,6 @@ SQLALCHEMY_ENGINE_OPTIONS = {  # 给主数据库链接专用的
     "echo"         : MySQLConf.echo,
     }
 
-SQLALCHEMY_BINDS = {
-    "management": f"mysql+pymysql://{MySQLConf.user}:{MySQLConf.password}@{MySQLConf.host}:{MySQLConf.port}/management",
-    # "sqlite_db": f"sqlite:////{BASE_DIR}/lib/sqlite_db.db",
-    "pgsql_db"  : {
-        "url"          : f"postgresql://{PgSQLConf.user}:{PgSQLConf.password}@{PgSQLConf.host}:{PgSQLConf.port}/{PgSQLConf.db}",
-        "connect_args" : {"client_encoding": PgSQLConf.charset},
-        "pool_size"    : PgSQLConf.pool_size,
-        "max_overflow" : PgSQLConf.max_overflow,
-        "pool_recycle" : PgSQLConf.pool_recycle,
-        "pool_timeout" : PgSQLConf.pool_timeout,
-        "pool_pre_ping": PgSQLConf.pool_pre_ping,
-        "echo"         : PgSQLConf.echo,
-        },
-    }
 SQLALCHEMY_ENGINE_OPTIONS_DEFAULT = {  # 数据库连接的默认值，优先级最低
     "json_serializer": lambda obj: json.dumps(obj, ensure_ascii=False),
     "pool_size"      : _CONFIG.get("sqlalchemy", "pool_size"),  # 常驻连接数

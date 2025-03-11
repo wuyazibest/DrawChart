@@ -13,7 +13,8 @@ import numpy as np
 import pandas as pd
 import requests
 
-from main.util import parse_url, talib_format, format_stock_code
+from main.util.common import parse_url
+from main.draw_chart.data_source.data_stock import talib_format, format_stock_code
 
 logger = logging.getLogger(__name__)
 
