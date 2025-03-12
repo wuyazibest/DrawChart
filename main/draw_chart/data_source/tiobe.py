@@ -80,8 +80,8 @@ def get_format_data():
     df = df.pivot('date', 'programing', 'data_per')
     df = df.astype("float")
     df = df.round(2)
-    # df = df.replace({np.nan: None})
-    df.to_dict()
+    df = df.replace({np.nan: None})
+    # df.to_dict()
     return df
 
 

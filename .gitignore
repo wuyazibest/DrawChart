@@ -4,6 +4,7 @@ logs/*.log
 migrations/
 conf/config.ini
 *.db
+*.xlsx
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

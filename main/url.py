@@ -19,6 +19,9 @@ def register_url(app):
     from main.draw_chart.url import blu_chart
     app.register_blueprint(blu_chart, url_prefix="/chart")
     
+    from main.chaoxi.url import blu_chaoxi
+    app.register_blueprint(blu_chaoxi, url_prefix="/chaoxi")
+    
     print("===" * 10)
     print(app.url_map)
     print("===" * 10)

@@ -67,6 +67,11 @@ def draw_line(
     graph.set_series_opts(
         label_opts=opts.LabelOpts(is_show=False),  # 线上的数字标签
         linestyle_opts=opts.LineStyleOpts(width=4, opacity=0.8, curve=0),  # 可以放在add_yaxis中单独设置每条线
+        markline_opts=opts.MarkLineOpts(  # 标记线数据
+            data=[opts.MarkLineItem(x=x) for x in xaxis if "00:00:00" in x],
+            label_opts=opts.LabelOpts(),
+            linestyle_opts=opts.LineStyleOpts(type_="dashed", color="#d3d3d3", )
+            ),
         )
     graph.set_global_opts(
         title_opts=opts.TitleOpts(title=title, pos_left="center"),
